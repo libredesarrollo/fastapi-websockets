@@ -2,13 +2,34 @@ from fastapi import FastAPI, APIRouter, Request, WebSocket, WebSocketDisconnect
 
 from fastapi.templating import Jinja2Templates
 
+from fastapi.middleware.cors import CORSMiddleware
+
 templates = Jinja2Templates(directory="templates/")
+
+# Define los orígenes permitidos (puedes usar ["*"] para permitir todo, 
+# pero no es recomendable en producción)
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173", # Puerto común de Vue/Vite
+]
+
+
+app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # uvicorn api:app --reload
 # 
 
-app = FastAPI()
 router = APIRouter()
 
 @app.get('/')
@@ -29,8 +50,8 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
 
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
+    # async def send_personal_message(self, message: str, websocket: WebSocket):
+    #     await websocket.send_text(message)
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:
