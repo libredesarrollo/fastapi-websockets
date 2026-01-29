@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, APIRouter, Request, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Query
 
 from fastapi.templating import Jinja2Templates
 
@@ -59,8 +59,19 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+async def get_token(token: str = Query(...)): # ... REQUERIDO
+    # Validación simple de token
+    if token != "token-secreto":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Token inválido"
+        )
+    return token
+
+# para conectar al WebSocket, el cliente 
+# deberá incluir el parámetro token: ws://localhost:8000/ws/123?token=token-secreto
 @app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
+async def websocket_endpoint(websocket: WebSocket, client_id: int, token: str = Depends(get_token)):
     await manager.connect(websocket)
     try:
         while True:
