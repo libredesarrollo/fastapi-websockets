@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, Request, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Query
+from pydantic import BaseModel
 
 from fastapi.templating import Jinja2Templates
 
@@ -35,6 +36,18 @@ router = APIRouter()
 @app.get('/')
 def form(request: Request):
     return templates.TemplateResponse(request=request, name='ws/chat.html')
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+@app.post("/login")
+async def login(data: LoginRequest):
+    # Validación simple local (hardcoded)
+    if data.username == "admin" and data.password == "admin":
+        return {"token": "token-secreto"}
+    
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
 
 from typing import List
 
