@@ -1,9 +1,12 @@
 from fastapi import FastAPI, APIRouter, Request, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Query
+from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+
 from pydantic import BaseModel
 
-from fastapi.templating import Jinja2Templates
+from rest_api import router as api_router
 
-from fastapi.middleware.cors import CORSMiddleware
+from typing import List
 
 templates = Jinja2Templates(directory="templates/")
 
@@ -15,9 +18,10 @@ origins = [
     "http://localhost:5173", # Puerto común de Vue/Vite
 ]
 
-
 app = FastAPI()
+router = APIRouter()
 
+app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,29 +31,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # uvicorn api:app --reload
 # 
-
-router = APIRouter()
 
 @app.get('/')
 def form(request: Request):
     return templates.TemplateResponse(request=request, name='ws/chat.html')
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
+# class LoginRequest(BaseModel):
+#     username: str
+#     password: str
 
-@app.post("/login")
-async def login(data: LoginRequest):
-    # Validación simple local (hardcoded)
-    if data.username == "admin" and data.password == "admin":
-        return {"token": "token-secreto"}
+# @app.post("/api/login")
+# async def login(data: LoginRequest):
+#     # Validación simple local (hardcoded)
+#     if data.username == "admin" and data.password == "admin":
+#         return {"token": "token-secreto"}
     
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
-
-from typing import List
+#     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
 
 class ConnectionManager:
     def __init__(self):

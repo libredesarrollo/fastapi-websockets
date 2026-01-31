@@ -4,12 +4,15 @@ from fastapi.templating import Jinja2Templates
 
 templates = Jinja2Templates(directory="templates/")
 
+from rest_api import router as api_router
 
 # uvicorn api:app --reload
 # 
 
 app = FastAPI()
 router = APIRouter()
+
+app.include_router(api_router)
 
 @app.get('/')
 def form(request: Request):
