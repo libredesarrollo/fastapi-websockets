@@ -25,9 +25,11 @@ class Alert(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(String(200))
     user_id = Column(Integer, ForeignKey("users.id"))
-    create_at = Column(DateTime(timezone=True), server_default=func.now())
+    room_id = Column(Integer, ForeignKey("rooms.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     user = relationship("User", back_populates="alerts")
+    room = relationship("Room", back_populates="alerts")
 
 class Room(Base):
     __tablename__ = "rooms"
