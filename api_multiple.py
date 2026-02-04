@@ -1,12 +1,15 @@
 from fastapi import FastAPI, APIRouter, Request, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from pydantic import BaseModel
 
 from rest_api import router as api_router
 
 from typing import List
+import models
+from database import SessionLocal
 
 templates = Jinja2Templates(directory="templates/")
 
@@ -18,7 +21,24 @@ origins = [
     "http://localhost:5173", # Puerto común de Vue/Vite
 ]
 
-app = FastAPI()
+def create_rooms():
+    db = SessionLocal()
+    try:
+        for name in ["room 1", "room 2"]:
+            if not db.query(models.Room).filter(models.Room.name == name).first():
+                db.add(models.Room(name=name))
+        db.commit()
+    finally:
+        db.close()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print('****START')
+    create_rooms()
+    yield
+    print('****END')
+
+app = FastAPI(lifespan=lifespan)
 router = APIRouter()
 
 app.include_router(api_router, prefix="/api")
