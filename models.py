@@ -36,6 +36,7 @@ class Room(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(60), unique=True)
     
+    alerts = relationship("Alert", back_populates="room")
     users = relationship("User", secondary=room_users, back_populates="rooms_joined")
 
 class Token(Base):

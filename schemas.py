@@ -15,7 +15,7 @@ class AlertBase(BaseModel):
 
 class Alert(AlertBase):
     id: int
-    created_at: datetime
+    create_at: datetime
     user_id: int
     class Config:
         orm_mode = True
@@ -31,6 +31,10 @@ class Room(RoomBase):
 
 # Schemas para Request Body
 class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class RegisterRequest(BaseModel):
     username: str
     password: str
 
