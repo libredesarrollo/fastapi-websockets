@@ -8,7 +8,7 @@ class UserBase(BaseModel):
 class User(UserBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class AlertBase(BaseModel):
     content: str
@@ -18,7 +18,7 @@ class Alert(AlertBase):
     create_at: datetime
     user_id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class RoomBase(BaseModel):
     name: str
@@ -27,7 +27,7 @@ class Room(RoomBase):
     id: int
     users: List[User] = []
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Schemas para Request Body
 class LoginRequest(BaseModel):

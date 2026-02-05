@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from rest_api import router as api_router
 
 from typing import List
-import models
+import models, schemas
 from database import SessionLocal
 
 templates = Jinja2Templates(directory="templates/")
@@ -91,24 +91,61 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-async def get_token(token: str = Query(...)): # ... REQUERIDO
-    # Validación simple de token
-    if token != "token-secreto":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Token inválido"
-        )
-    return token
+# async def get_token(token: str = Query(...)): # ... REQUERIDO
+#     # Validación simple de token
+#     if token != "token-secreto":
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Token inválido"
+#         )
+#     return token
+
+async def get_user_by_token(token: str = Query(...)):
+    db = SessionLocal()
+    try:
+        # El token viene como "Token_abc123..."
+        if "_" not in token:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Formato de token inválido")
+        
+        _, key = token.split("_")
+        db_token = db.query(models.Token).filter(models.Token.key == key).first()
+        
+        if not db_token:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token inválido")
+        
+        return db_token.user
+    finally:
+        db.close()
+
 
 # para conectar al WebSocket, el cliente 
 # deberá incluir el parámetro token: ws://localhost:8000/ws/123?token=token-secreto
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int, token: str = Depends(get_token)):
+
+@app.websocket("/ws/{room_id}")
+async def websocket_endpoint(websocket: WebSocket, room_id: int, user: models.User = Depends(get_user_by_token)):
+    db = SessionLocal()
+    room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if not room:
+        await websocket.accept()
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        db.close()
+        return
+
     await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_text()
-            await manager.broadcast(f"Cliente #{client_id} dice: {data}")
+            await manager.broadcast(f"Cliente #{room_id} dice: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        await manager.broadcast(f"Cliente #{client_id} se ha desconectado")
+        await manager.broadcast(f"Cliente #{room_id} se ha desconectado")
+# @app.websocket("/ws/{client_id}")
+# async def websocket_endpoint(websocket: WebSocket, client_id: int, token: str = Depends(get_token)):
+#     await manager.connect(websocket)
+#     try:
+#         while True:
+#             data = await websocket.receive_text()
+#             await manager.broadcast(f"Cliente #{client_id} dice: {data}")
+#     except WebSocketDisconnect:
+#         manager.disconnect(websocket)
+#         await manager.broadcast(f"Cliente #{client_id} se ha desconectado")
