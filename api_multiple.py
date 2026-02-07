@@ -51,7 +51,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# uvicorn api:app --reload
+# uvicorn api_multiple:app --reload
 # 
 
 @app.get('/')
@@ -121,11 +121,12 @@ async def get_user_by_token(token: str = Query(...)):
 # para conectar al WebSocket, el cliente 
 # deberá incluir el parámetro token: ws://localhost:8000/ws/123?token=token-secreto
 
-@app.websocket("/ws/{room_id}")
+@app.websocket("/ws/alert/room/{room_id}")
 async def websocket_endpoint(websocket: WebSocket, room_id: int, user: models.User = Depends(get_user_by_token)):
     db = SessionLocal()
     room = db.query(models.Room).filter(models.Room.id == room_id).first()
     if not room:
+        
         await websocket.accept()
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         db.close()
@@ -139,6 +140,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: int, user: models.Us
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast(f"Cliente #{room_id} se ha desconectado")
+        
 # @app.websocket("/ws/{client_id}")
 # async def websocket_endpoint(websocket: WebSocket, client_id: int, token: str = Depends(get_token)):
 #     await manager.connect(websocket)
