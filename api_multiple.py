@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, Request, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Query
+import json
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -136,6 +137,13 @@ async def websocket_endpoint(websocket: WebSocket, room_id: int, user: models.Us
     try:
         while True:
             data = await websocket.receive_text()
+            data_json = json.loads(data)
+            message = data_json.get("message", "")
+            if message:
+                alert = models.Alert(content=message, user_id=user.id, room_id=room_id)
+                db.add(alert)
+                db.commit()
+                # db.refresh(alert)
             await manager.broadcast(f"Cliente #{room_id} dice: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)

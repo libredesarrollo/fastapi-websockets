@@ -114,7 +114,7 @@ def logout(request: schemas.LogoutRequest, db: Session = Depends(get_db)):
 @router.get("/alerts", response_model=List[schemas.Alert])
 def alerts(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     print(user.id)
-    alerts = db.query(models.Alert).order_by(models.Alert.create_at).all()
+    alerts = db.query(models.Alert).order_by(models.Alert.created_at).all()
     return alerts
 
 @router.get("/rooms", response_model=List[schemas.Room])

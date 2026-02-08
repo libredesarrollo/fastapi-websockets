@@ -15,7 +15,7 @@ class AlertBase(BaseModel):
 
 class Alert(AlertBase):
     id: int
-    create_at: datetime
+    created_at: datetime
     user_id: int
     class Config:
         from_attributes = True
