@@ -112,10 +112,11 @@ def logout(request: schemas.LogoutRequest, db: Session = Depends(get_db)):
     return "ok"
 
 @router.get("/alerts", response_model=List[schemas.Alert])
-def alerts(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    print(user.id)
-    alerts = db.query(models.Alert).order_by(models.Alert.created_at).all()
-    return alerts
+def alerts(room_id: Optional[int] = None, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    query = db.query(models.Alert)
+    if room_id:
+        query = query.filter(models.Alert.room_id == room_id)
+    return query.order_by(models.Alert.created_at).all()
 
 @router.get("/rooms", response_model=List[schemas.Room])
 def rooms(db: Session = Depends(get_db)):
