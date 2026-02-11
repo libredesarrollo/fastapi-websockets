@@ -144,7 +144,13 @@ async def websocket_endpoint(websocket: WebSocket, room_id: int, user: models.Us
                 db.add(alert)
                 db.commit()
                 # db.refresh(alert)
-            await manager.broadcast(f"Cliente #{room_id} dice: {data}")
+            # await manager.broadcast(f"Cliente #{room_id} dice: {data}")
+                       # Convertir el objeto SQLAlchemy a un esquema Pydantic y luego a dict/json
+                alert_data = schemas.Alert.model_validate(alert).model_dump()
+                # Convertir datetime a string para que sea serializable por json
+                alert_data["created_at"] = alert_data["created_at"].isoformat()
+                
+                await manager.broadcast(json.dumps(alert_data))
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast(f"Cliente #{room_id} se ha desconectado")
