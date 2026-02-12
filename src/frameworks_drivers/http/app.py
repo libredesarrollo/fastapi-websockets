@@ -1,10 +1,20 @@
-"""FastAPI application initialization."""
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
-from src.interface_adapters.controllers import auth_controller, alerts_controller, rooms_controller
+from src.interface_adapters.controllers import (
+    auth_controller, 
+    alerts_controller, 
+    rooms_controller,
+    websocket_controller
+)
 from src.frameworks_drivers.db.connection import engine
 from src.frameworks_drivers.db.orm_models import Base
+from src.frameworks_drivers.http.dependencies import (
+    get_user_by_token_query,
+    get_room_repository,
+    get_alert_repository
+)
+from src.entities.user import User
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -41,6 +51,26 @@ def form(request: Request):
     return templates.TemplateResponse(request=request, name='ws/chat.html')
 
 
+@app.websocket("/ws/alert/room/{room_id}")
+async def websocket_endpoint(
+    websocket: WebSocket, 
+    room_id: int, 
+    user: User = Depends(get_user_by_token_query),
+    room_repo=Depends(get_room_repository),
+    alert_repo=Depends(get_alert_repository)
+):
+    """
+    WebSocket endpoint refactored to Clean Architecture.
+    Delegates logic to the interface adapter.
+    """
+    await websocket_controller.websocket_handler(
+        websocket=websocket,
+        room_id=room_id,
+        user=user,
+        room_repo=room_repo,
+        alert_repo=alert_repo
+    )
+        
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time communication."""

@@ -90,3 +90,32 @@ def get_current_user(
         username=user_orm.username,
         password=user_orm.password
     )
+
+
+def get_user_by_token_query(
+    token: str,
+    db: Session = Depends(get_db)
+) -> User:
+    """Authentication via query parameter for WebSockets."""
+    # Format: Token_<key>
+    if "_" not in token:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid token format"
+        )
+    
+    _, key = token.split("_")
+    token_orm = db.query(TokenORM).filter(TokenORM.key == key).first()
+    
+    if not token_orm:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid token"
+        )
+    
+    user_orm = token_orm.user
+    return User(
+        id=user_orm.id,
+        username=user_orm.username,
+        password=user_orm.password
+    )
