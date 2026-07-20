@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -7,8 +7,7 @@ class UserBase(BaseModel):
 
 class User(UserBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AlertBase(BaseModel):
     content: str
@@ -17,8 +16,7 @@ class Alert(AlertBase):
     id: int
     created_at: datetime
     user_id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RoomBase(BaseModel):
     name: str
@@ -26,8 +24,7 @@ class RoomBase(BaseModel):
 class Room(RoomBase):
     id: int
     users: List[User] = []
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Schemas para Request Body
 class LoginRequest(BaseModel):

@@ -1,5 +1,5 @@
 """Pydantic schemas for API request/response."""
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -12,9 +12,7 @@ class UserBase(BaseModel):
 class User(UserBase):
     """User response schema."""
     id: int
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AlertBase(BaseModel):
@@ -27,9 +25,7 @@ class Alert(AlertBase):
     id: int
     created_at: datetime
     user_id: int
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RoomBase(BaseModel):
@@ -41,9 +37,7 @@ class Room(RoomBase):
     """Room response schema."""
     id: int
     users: List[User] = []
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Schemas for Request Body
